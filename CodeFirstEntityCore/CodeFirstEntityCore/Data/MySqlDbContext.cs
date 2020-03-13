@@ -4,9 +4,9 @@ using CodeFirstEntityCore.Models;
 
 namespace CodeFirstEntityCore.Data
 {
-    public class ApplicationDbContext : IdentityDbContext, ISportContext
+    public class MySqlDbContext: IdentityDbContext, ISportContext
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        public MySqlDbContext(DbContextOptions<MySqlDbContext> options)
             : base(options)
         {
         }

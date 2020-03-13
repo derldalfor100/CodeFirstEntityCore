@@ -14,15 +14,20 @@ namespace CodeFirstEntityCore.Controllers
     {
         private readonly ApplicationDbContext _context;
 
-        public TeamsController(ApplicationDbContext context)
+        private readonly MySqlDbContext _mysqlContext;
+
+        public TeamsController(ApplicationDbContext context, MySqlDbContext mysqlContext)
         {
             _context = context;
+
+            _mysqlContext = mysqlContext;
         }
 
         // GET: Teams
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Teams.ToListAsync());
+            //return View(await _context.Teams.ToListAsync());
+            return View(await _mysqlContext.Teams.ToListAsync());
         }
 
         // GET: Teams/Details/5
@@ -35,7 +40,11 @@ namespace CodeFirstEntityCore.Controllers
 
             var team = await _context.Teams
                 .FirstOrDefaultAsync(m => m.TeamName == id);
-            if (team == null)
+
+            var teamMySql = await _mysqlContext.Teams
+                .FirstOrDefaultAsync(m => m.TeamName == id);
+
+            if (team == null || teamMySql == null)
             {
                 return NotFound();
             }
@@ -59,7 +68,9 @@ namespace CodeFirstEntityCore.Controllers
             if (ModelState.IsValid)
             {
                 _context.Add(team);
+                _mysqlContext.Add(team);
                 await _context.SaveChangesAsync();
+                await _mysqlContext.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
             return View(team);
@@ -74,7 +85,9 @@ namespace CodeFirstEntityCore.Controllers
             }
 
             var team = await _context.Teams.FindAsync(id);
-            if (team == null)
+            var teamMySql = await _mysqlContext.Teams.FindAsync(id);
+
+            if (team == null || teamMySql == null)
             {
                 return NotFound();
             }
@@ -98,7 +111,9 @@ namespace CodeFirstEntityCore.Controllers
                 try
                 {
                     _context.Update(team);
+                    _mysqlContext.Update(team);
                     await _context.SaveChangesAsync();
+                    await _mysqlContext.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -126,7 +141,10 @@ namespace CodeFirstEntityCore.Controllers
 
             var team = await _context.Teams
                 .FirstOrDefaultAsync(m => m.TeamName == id);
-            if (team == null)
+            var teamMySql = await _mysqlContext.Teams
+                .FirstOrDefaultAsync(m => m.TeamName == id);
+
+            if (team == null || teamMySql == null)
             {
                 return NotFound();
             }
@@ -141,13 +159,15 @@ namespace CodeFirstEntityCore.Controllers
         {
             var team = await _context.Teams.FindAsync(id);
             _context.Teams.Remove(team);
+            _mysqlContext.Teams.Remove(team);
             await _context.SaveChangesAsync();
+            await _mysqlContext.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool TeamExists(string id)
         {
-            return _context.Teams.Any(e => e.TeamName == id);
+            return _context.Teams.Any(e => e.TeamName == id) && _mysqlContext.Teams.Any(e => e.TeamName == id);
         }
     }
 }

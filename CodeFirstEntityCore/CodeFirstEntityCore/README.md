@@ -1,5 +1,7 @@
 ﻿Open Project:
 
+0. Enter without code then create a Github repository and finally add new project in the same path
+
 1. Choose .net core web application
 
 2. Write your Solution Name

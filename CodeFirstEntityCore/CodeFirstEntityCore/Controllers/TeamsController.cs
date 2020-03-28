@@ -160,6 +160,7 @@ namespace CodeFirstEntityCore.Controllers
             var team = await _context.Teams.FindAsync(id);
             _context.Teams.Remove(team);
             _mysqlContext.Teams.Remove(team);
+            await RemovePlayersFromTeam(team.TeamName);
             await _context.SaveChangesAsync();
             await _mysqlContext.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
@@ -168,6 +169,26 @@ namespace CodeFirstEntityCore.Controllers
         private bool TeamExists(string id)
         {
             return _context.Teams.Any(e => e.TeamName == id) && _mysqlContext.Teams.Any(e => e.TeamName == id);
+        }
+
+        private async Task RemovePlayersFromTeam(string id)
+        {
+            var players = _context.Players.Where(x => x.TeamName == id).ToList();
+
+            if(players.Count == 0)
+            {
+                return;
+            }
+
+            players.ForEach(p =>
+            {
+                _context.Players.Remove(p);
+                _mysqlContext.Players.Remove(p);
+            });
+
+            await _context.SaveChangesAsync();
+            await _mysqlContext.SaveChangesAsync();
+
         }
     }
 }

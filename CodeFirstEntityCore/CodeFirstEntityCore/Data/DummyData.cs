@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections;
 
 namespace CodeFirstEntityCore.Data
 {
@@ -15,16 +16,25 @@ namespace CodeFirstEntityCore.Data
         {
             using (var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
             {
+                //var contexts = new ArrayList()
+                //{
+                //    GetContext<ApplicationDbContext>(serviceScope),
+                //    GetContext<MySqlDbContext>(serviceScope)
+                //};
+
+                //InitializeByContextsList<ApplicationDbContext, MySqlDbContext>(contexts);
 
                 var sqlContext = GetContext<ApplicationDbContext>(serviceScope);
-                InitializeByContext(sqlContext);
+                //InitializeByContext(sqlContext);
 
                 var mySqlContext = GetContext<MySqlDbContext>(serviceScope);
-                InitializeByContext(mySqlContext);
+                //InitializeByContext(mySqlContext);
+
+                InitializeByTwoContexts(sqlContext, mySqlContext);
             }
         }
 
-        private static T GetContext<T>(IServiceScope serviceScope) where T: IdentityDbContext, ISportContext
+        private static T GetContext<T>(IServiceScope serviceScope) where T : IdentityDbContext, ISportContext
         {
             return serviceScope.ServiceProvider.GetService<T>();
         }
@@ -47,6 +57,49 @@ namespace CodeFirstEntityCore.Data
             var players = DummyData.GetPlayers(context).ToArray();
             context.Players.AddRange(players);
             context.SaveChanges();
+        }
+
+        private static void InitializeByContextsList<T, U>(ArrayList contexts) where T : IdentityDbContext, ISportContext
+            where U : IdentityDbContext, ISportContext
+        {
+            foreach (var c in contexts)
+            {
+
+                if (c.GetType() == typeof(T))
+                {
+                    var context = (T)c;
+                    InitializeByContext<T>(context);
+                } else
+                {
+                    var context = (U)c;
+                    InitializeByContext<U>(context);
+                }
+            }
+        }
+
+        private static void InitializeByTwoContexts<T, U>(T context1, U context2) where T : IdentityDbContext, ISportContext
+            where U : IdentityDbContext, ISportContext 
+        {
+            context1.Database.EnsureCreated();
+
+            context2.Database.EnsureCreated();
+
+            if (context1.Teams.Any() || context2.Teams.Any())
+            {
+                return; 
+            }
+
+            var teams = DummyData.GetTeams().ToArray();
+            context1.Teams.AddRange(teams);
+            context1.SaveChanges();
+            context2.Teams.AddRange(teams);
+            context2.SaveChanges();
+
+            var players = DummyData.GetPlayers(context1).ToArray();
+            context1.Players.AddRange(players);
+            context1.SaveChanges();
+            context2.Players.AddRange(players);
+            context2.SaveChanges();
         }
 
         public static List<Team> GetTeams()
